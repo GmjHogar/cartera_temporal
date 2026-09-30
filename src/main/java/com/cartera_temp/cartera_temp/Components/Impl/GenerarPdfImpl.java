@@ -101,10 +101,12 @@ public class GenerarPdfImpl implements GenerarPdf {
         String pagare = cpc.getPagare();
         Usuario usu = usuClient.obtenerUsuario(username);
         if (Objects.isNull(usu)) {
+            Logger.getLogger(GenerarPdfImpl.class.getName()).log(Level.WARNING, "PDF acuerdo: no se encontro el usuario {0}", username);
             return null;
         }
         Firmas firma = firmasService.findFirmaByUsername(username);
         if (Objects.isNull(firma)) {
+            Logger.getLogger(GenerarPdfImpl.class.getName()).log(Level.WARNING, "PDF acuerdo: el usuario {0} no tiene firma registrada", username);
             return null;
         }
 
@@ -585,7 +587,7 @@ public class GenerarPdfImpl implements GenerarPdf {
             }
 
         } catch (IOException e) {
-            System.out.println(e);
+            Logger.getLogger(GenerarPdfImpl.class.getName()).log(Level.WARNING, "PDF acuerdo: no se pudo generar para " + cpc.getNumeroObligacion(), e);
             return null;
         }
 

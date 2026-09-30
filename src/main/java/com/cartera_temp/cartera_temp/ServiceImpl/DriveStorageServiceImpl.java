@@ -145,12 +145,22 @@ public class DriveStorageServiceImpl implements DriveStorageService {
         String q = "name = '" + escapado + "' and '" + parentId + "' in parents and trashed = false"
                 + " and mimeType " + (esCarpeta ? "=" : "!=") + " '" + MIME_CARPETA + "'";
 
+        // La busqueda por nombre de Drive no distingue mayusculas (en la raiz hay "Firmas" y "firmas",
+        // "Recibos" y "recibos"), asi que se traen varios y se elige el que coincide exactamente.
         FileList resultado = drive.files().list()
                 .setQ(q)
-                .setPageSize(1)
-                .setFields("files(id)")
+                .setPageSize(20)
+                .setFields("files(id,name)")
                 .execute();
         List<File> archivos = resultado.getFiles();
-        return archivos == null || archivos.isEmpty() ? null : archivos.get(0).getId();
+        if (archivos == null) {
+            return null;
+        }
+        for (File archivo : archivos) {
+            if (nombre.equals(archivo.getName())) {
+                return archivo.getId();
+            }
+        }
+        return null;
     }
 }
