@@ -80,7 +80,12 @@ public class GenerarPdfImpl implements GenerarPdf {
 
         List<Gestiones> gestion = cpc.getGestiones();
 
-        List<Gestiones> gestionList = gestion.stream().filter(g -> g.getClasificacion().getClasificacion().equals("ACUERDO DE PAGO") && g.getClasificacion() instanceof AcuerdoPago && ((AcuerdoPago) g.getClasificacion()).isIsActive() == true).collect(Collectors.toList());
+        // Mismo criterio que sendLinkAndPdfToClient: el texto de "clasificacion" lo envia el frontend y puede variar
+        List<Gestiones> gestionList = gestion.stream().filter(g -> g.getClasificacion() instanceof AcuerdoPago && ((AcuerdoPago) g.getClasificacion()).isIsActive()).collect(Collectors.toList());
+        if (gestionList.isEmpty()) {
+            Logger.getLogger(GenerarPdfImpl.class.getName()).log(Level.WARNING, "La cuenta {0} no tiene acuerdo de pago activo", cpc.getNumeroObligacion());
+            return null;
+        }
 
         String titulo = "REPORTE ACUERDO DE PAGO";
         String fecha = "";
