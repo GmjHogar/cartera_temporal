@@ -2,15 +2,14 @@ package com.cartera_temp.cartera_temp.ServiceImpl;
 
 import com.cartera_temp.cartera_temp.Dtos.FirmasDto;
 import com.cartera_temp.cartera_temp.Models.Firmas;
+import com.cartera_temp.cartera_temp.Service.DriveStorageService;
 import com.cartera_temp.cartera_temp.Service.FirmasService;
-import com.cartera_temp.cartera_temp.Utils.SaveFiles;
 import com.cartera_temp.cartera_temp.repository.FirmasRespository;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,15 +17,15 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class FirmasServiceImpl implements FirmasService {
 
+    // Carpeta de Drive relativa a la raiz (antes /uploads/Firmas)
+    private static final String CARPETA_FIRMAS = "Firmas";
+
     private final FirmasRespository fr;
-    private final SaveFiles save;
+    private final DriveStorageService driveStorageService;
 
-    @Value("${ruta.firmas}")
-    private String ruta;
-
-    public FirmasServiceImpl(FirmasRespository fr, SaveFiles save) {
+    public FirmasServiceImpl(FirmasRespository fr, DriveStorageService driveStorageService) {
         this.fr = fr;
-        this.save = save;
+        this.driveStorageService = driveStorageService;
 
     }
 
@@ -42,27 +41,30 @@ public class FirmasServiceImpl implements FirmasService {
             return null;
         }
 
+        // Se espera un data URI: "data:image/png;base64,...."
         String[] data = dto.getBase64().split(",");
-        
+        if (data.length < 2 || !data[0].contains(":") || !data[0].contains("/")) {
+            return null;
+        }
+
         MultipartFile firma = new CustomMultipartFile(data[1], data[0]);
-        
-        
-        
+
         String nombreFirmaBd = firma.getOriginalFilename();
 
-        String firmaSave = null;
+        // En la columna ruta se guarda el fileId de Drive
+        String fileId;
         try {
-            firmaSave = save.saveFile(firma.getBytes(), nombreFirmaBd, ruta.concat("/").concat(nombreFirmaBd));
-
+            fileId = driveStorageService.subir(firma.getBytes(), nombreFirmaBd, firma.getContentType(), CARPETA_FIRMAS);
         } catch (IOException ex) {
-            Logger.getLogger(FirmasServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(FirmasServiceImpl.class.getName()).log(Level.SEVERE, "No se pudo subir la firma a Drive", ex);
+            return null;
         }
 
         Firmas fSave = new Firmas();
 
         fSave.setFilename(nombreFirmaBd);
         fSave.setUsername(dto.getUsername());
-        fSave.setRuta(ruta.concat("/").concat(firmaSave));
+        fSave.setRuta(fileId);
         fSave = fr.save(fSave);
         return fSave;
 

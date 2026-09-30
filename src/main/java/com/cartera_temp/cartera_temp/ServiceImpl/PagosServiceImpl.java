@@ -18,6 +18,7 @@ import com.cartera_temp.cartera_temp.Models.Pagos;
 import com.cartera_temp.cartera_temp.Models.ReciboPago;
 import com.cartera_temp.cartera_temp.ModelsClients.Usuario;
 import com.cartera_temp.cartera_temp.Service.CuentasPorCobrarService;
+import com.cartera_temp.cartera_temp.Service.DriveStorageService;
 import com.cartera_temp.cartera_temp.Service.PagosService;
 import com.cartera_temp.cartera_temp.Utils.Functions;
 import com.cartera_temp.cartera_temp.Utils.SaveFiles;
@@ -38,7 +39,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -58,16 +58,14 @@ public class PagosServiceImpl implements PagosService {
     private final NotaRepository notaRepository;
     private final NombresClasificacionRepository nombresClasificacionRepository;
     private final NotificacionesRepository notificacionesRepository;
-
-    @Value("${ruta.recibos}")
-    private String path;
+    private final DriveStorageService driveStorageService;
 
     public PagosServiceImpl(PagosRespositoty pagosRespositoty, CuentasPorCobrarRepository cpcr,
             usuario_client usuClient, GestionesRepository gr, AcuerdoPagoRepository apr, GenerarPdf generarPdf,
             SaveFiles saveFiles, ReciboPagoRepository reciboPagoRepository,
             AsesorCarteraRepository asesorCarteraRepository, NotaRepository notaRepository,
             NombresClasificacionRepository nombresClasificacionRepository,
-            NotificacionesRepository notificacionesRepository) {
+            NotificacionesRepository notificacionesRepository, DriveStorageService driveStorageService) {
         this.pagosRespositoty = pagosRespositoty;
         this.cpcr = cpcr;
         this.usuClient = usuClient;
@@ -80,6 +78,7 @@ public class PagosServiceImpl implements PagosService {
         this.notaRepository = notaRepository;
         this.nombresClasificacionRepository = nombresClasificacionRepository;
         this.notificacionesRepository = notificacionesRepository;
+        this.driveStorageService = driveStorageService;
     }
 
     @Override
@@ -194,12 +193,10 @@ public class PagosServiceImpl implements PagosService {
             }
 
             String fileName = multipartFile.getOriginalFilename();
-            String ruta = saveFiles.obtenerRuta(fileName, path, cpc.getSede().getSede());
 
-            String save = saveFiles.saveFile(multipartFile.getBytes(), fileName, ruta);
-            if (Objects.isNull(save)) {
-                return null;
-            }
+            // En la columna ruta se guarda el fileId de Drive
+            String ruta = driveStorageService.subir(multipartFile.getBytes(), fileName, "application/pdf",
+                    saveFiles.carpetaRecibos(cpc.getSede().getSede()));
 
             ReciboPago recibo = new ReciboPago();
             recibo.setNombreArchivo(fileName);
@@ -298,6 +295,14 @@ public class PagosServiceImpl implements PagosService {
 
         return null;
 
+    }
+
+    @Override
+    public ReciboPago findReciboById(Long idRecibo) {
+        if (idRecibo == null) {
+            return null;
+        }
+        return reciboPagoRepository.findById(idRecibo).orElse(null);
     }
 
     private Date obtenerFechaCompromiso(List<Cuotas> cuotas) {
