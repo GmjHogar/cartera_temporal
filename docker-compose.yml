@@ -18,9 +18,13 @@ services:
 
     environment:
       TZ: ${TZ:-America/Bogota}
+      # Recibos y firmas se leen y escriben con la API de Google Drive (valores en .env).
+      # DRIVE_ROOT_FOLDER_ID = carpeta que antes se montaba con rclone (contiene Firmas/ y Recibos/)
+      DRIVE_CLIENT_ID: ${DRIVE_CLIENT_ID:-}
+      DRIVE_CLIENT_SECRET: ${DRIVE_CLIENT_SECRET:-}
+      DRIVE_REFRESH_TOKEN: ${DRIVE_REFRESH_TOKEN:-}
+      DRIVE_ROOT_FOLDER_ID: ${DRIVE_ROOT_FOLDER_ID:-}
 
-    # El proceso Java corre con este UID:GID; tiene que poder escribir
-    # en HOST_DATA_PATH (clave si el mount es rclone/gdrive).
     user: "${PUID:-1001}:${PGID:-1001}"
 
     # Solo visible dentro de npm-network, nunca en el host
@@ -28,10 +32,7 @@ services:
       - "8021"
 
     volumes:
-      # Rutas internas fijadas por el Config Server (ruta.firmas / ruta.recibos)
-      - ${HOST_DATA_PATH:-/mnt/gdrive/archivos/cartera-temporal}/Firmas:/uploads/Firmas
-      - ${HOST_DATA_PATH:-/mnt/gdrive/archivos/cartera-temporal}/Recibos:/uploads/Recibos
-      # Logs y temporales en disco local, no en el gdrive
+      # Logs y temporales en disco local
       - cartera_logs:/var/log/cartera
       - cartera_tmp:/tmp
 
@@ -52,6 +53,54 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # Instancia de pruebas (rutas /api/v2, nombre cartera-temporal-microservice-test).
+  # Imagen y contenedor propios para no pisar produccion. Levantar solo este servicio:
+  #   docker compose up -d --build cartera-temporal-back-test
+  #   NPM -> Forward Hostname: cartera-temporal-back-test   Port: 8021
+  cartera-temporal-back-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.build
+      args:
+        XMX: ${XMX_TEST:-512m}
+        PROFILE: ${PROFILE_TEST:-develop}
+    image: cartera-temporal-back:test
+    container_name: cartera-temporal-back-test
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ:-America/Bogota}
+      DRIVE_CLIENT_ID: ${DRIVE_CLIENT_ID:-}
+      DRIVE_CLIENT_SECRET: ${DRIVE_CLIENT_SECRET:-}
+      DRIVE_REFRESH_TOKEN: ${DRIVE_REFRESH_TOKEN:-}
+      # Carpeta de Drive separada para que las pruebas no escriban en los archivos de produccion
+      DRIVE_ROOT_FOLDER_ID: ${DRIVE_ROOT_FOLDER_ID_TEST:-}
+
+    user: "${PUID:-1001}:${PGID:-1001}"
+
+    expose:
+      - "8021"
+
+    volumes:
+      - cartera_logs_test:/var/log/cartera
+      - cartera_tmp_test:/tmp
+
+    networks:
+      - npm-network
+
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 3 bash -c '</dev/tcp/127.0.0.1/8021' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 
 networks:
   npm-network:
@@ -60,3 +109,5 @@ networks:
 volumes:
   cartera_logs:
   cartera_tmp:
+  cartera_logs_test:
+  cartera_tmp_test:

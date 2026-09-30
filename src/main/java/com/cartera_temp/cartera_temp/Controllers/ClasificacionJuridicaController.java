@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
-@RequestMapping("/api/v1/clasificacionJuridica")
+@RequestMapping("/api/v2/clasificacionJuridica")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class ClasificacionJuridicaController {
 

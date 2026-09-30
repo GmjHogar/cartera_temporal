@@ -1,20 +1,20 @@
 package com.cartera_temp.cartera_temp.Utils;
 
+import com.cartera_temp.cartera_temp.Service.DriveStorageService;
 import com.cartera_temp.cartera_temp.ServiceImpl.CustomMultipartFile;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import org.apache.tomcat.util.codec.binary.Base64;
+import java.util.Base64;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class SaveFiles {
+
+    private final DriveStorageService driveStorageService;
+
+    public SaveFiles(DriveStorageService driveStorageService) {
+        this.driveStorageService = driveStorageService;
+    }
 
     public MultipartFile convertirFile(String base64) {
 
@@ -34,60 +34,19 @@ public class SaveFiles {
         return multipartFile;
     }
 
-    public String saveFile(byte[] bytes, String name, String ruta) throws FileNotFoundException, IOException {
-
-        Path path = Paths.get(ruta);
-        Files.write(path, bytes);
-        return name;
-
+    /**
+     * Carpeta de Drive (relativa a la raiz) donde se guardan los recibos de una
+     * sede. Es la misma estructura que se usaba en /uploads/Recibos/RECIBOS/<sede>.
+     */
+    public String carpetaRecibos(String sede) {
+        return "Recibos/RECIBOS/".concat(sede);
     }
 
-    public  String obtenerRuta(String nombreArchivo, String ruta, String sede) throws IOException {
-
-        Path reportesFolderPath = Paths.get(ruta.concat("/").concat("RECIBOS"));
-
-        if (!Files.exists(reportesFolderPath)) {
-            //CREA DIRECTORIO PRINCIPAL "DOCUMENTACION"
-            Files.createDirectories(reportesFolderPath);
-        }
-
-        Path sedePath = reportesFolderPath.resolve(sede);
-
-        if (!Files.exists(sedePath)) {
-            //CREAR DIRECTORIO DE RECIBOS POR SEDES
-            Files.createDirectories(sedePath);
-
-            Path folderCuentaPath = sedePath.resolve(sedePath);
-            if (!Files.exists(folderCuentaPath)) {
-                //CREA DIRECTRIO POR NUMERO DE OBLIGACION EN LA SEDE
-                Files.createDirectories(folderCuentaPath);
-                
-                
-                return folderCuentaPath.resolve(nombreArchivo).toString();
-            }
-
-            return folderCuentaPath.resolve(nombreArchivo).toString();
-        }
-        return sedePath.resolve(nombreArchivo).toString();
+    /**
+     * @param ruta fileId de Drive o ruta antigua "/uploads/..."
+     */
+    public String pdfToBase64(String ruta) throws IOException {
+        return Base64.getEncoder().encodeToString(driveStorageService.descargar(ruta));
     }
-    
-     public String pdfToBase64(String ruta) throws FileNotFoundException, IOException {
-        File img = new File(ruta);
-        Base64 base64 = new Base64();
-        byte[] imageBytes = new byte[(int) img.length()];
-        InputStream inputStream = new FileInputStream(img);
-        inputStream.read(imageBytes);
-        String encodedFile = base64.encodeToString(imageBytes);
-        
-        return encodedFile;
-    }
-     
-     public byte[] fileToByte(String ruta) throws FileNotFoundException, IOException{
-         
-         File file = new File(ruta);
-         byte[] imageBytes = new byte[(int) file.length()];
-         
-         return imageBytes;
-     }
 
 }

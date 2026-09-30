@@ -483,7 +483,7 @@ public class GestionesServiceImpl implements GestionesService {
                             String base64 = saveFiles.pdfToBase64(cuotas.getPagos().getReciboPago().getRuta());
                             cuotas.getPagos().getReciboPago().setRuta(base64);
                         } catch (IOException ex) {
-                            Logger.getLogger(GestionesServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
+                            Logger.getLogger(GestionesServiceImpl.class.getName()).log(Level.WARNING, ex.getMessage());
                         }
                     }
                 }
@@ -898,8 +898,7 @@ public class GestionesServiceImpl implements GestionesService {
                                 try {
                                     base = saveFiles.pdfToBase64(cuotas.getPagos().getReciboPago().getRuta());
                                 } catch (IOException ex) {
-                                    Logger.getLogger(CuentaPorCobrarServiceImpl.class.getName()).log(Level.SEVERE, null,
-                                            ex);
+                                    Logger.getLogger(CuentaPorCobrarServiceImpl.class.getName()).log(Level.WARNING, ex.getMessage());
                                     continue;
                                 }
                                 System.out.println(cuotas.getIdCuota());

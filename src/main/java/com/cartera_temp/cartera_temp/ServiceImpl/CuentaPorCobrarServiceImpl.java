@@ -258,8 +258,7 @@ public class CuentaPorCobrarServiceImpl implements CuentasPorCobrarService {
                                 try {
                                     base = saveFiles.pdfToBase64(cuotas.getPagos().getReciboPago().getRuta());
                                 } catch (IOException ex) {
-                                    Logger.getLogger(CuentaPorCobrarServiceImpl.class.getName()).log(Level.SEVERE, null,
-                                            ex);
+                                    Logger.getLogger(CuentaPorCobrarServiceImpl.class.getName()).log(Level.WARNING, ex.getMessage());
                                     continue;
                                 }
                                 System.out.println(cuotas.getIdCuota());
@@ -387,8 +386,7 @@ public class CuentaPorCobrarServiceImpl implements CuentasPorCobrarService {
 
                                 }
                             } catch (IOException ex) {
-                                Logger.getLogger(CuentaPorCobrarServiceImpl.class.getName()).log(Level.SEVERE, null,
-                                        ex);
+                                Logger.getLogger(CuentaPorCobrarServiceImpl.class.getName()).log(Level.WARNING, ex.getMessage());
                             }
                         }
 
@@ -760,8 +758,7 @@ public class CuentaPorCobrarServiceImpl implements CuentasPorCobrarService {
                                 try {
                                     base = saveFiles.pdfToBase64(cuotas.getPagos().getReciboPago().getRuta());
                                 } catch (IOException ex) {
-                                    Logger.getLogger(CuentaPorCobrarServiceImpl.class.getName()).log(Level.SEVERE, null,
-                                            ex);
+                                    Logger.getLogger(CuentaPorCobrarServiceImpl.class.getName()).log(Level.WARNING, ex.getMessage());
                                 }
                                 cuotas.getPagos().getReciboPago().setRuta(base);
                             }

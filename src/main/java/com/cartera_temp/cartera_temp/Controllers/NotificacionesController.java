@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
-@RequestMapping("/api/v1/notificaciones")
+@RequestMapping("/api/v2/notificaciones")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class NotificacionesController {
     

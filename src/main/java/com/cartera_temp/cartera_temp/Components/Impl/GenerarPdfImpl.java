@@ -8,17 +8,14 @@ import com.cartera_temp.cartera_temp.Models.CuentasPorCobrar;
 import com.cartera_temp.cartera_temp.Models.Firmas;
 import com.cartera_temp.cartera_temp.Models.Gestiones;
 import com.cartera_temp.cartera_temp.ModelsClients.Usuario;
+import com.cartera_temp.cartera_temp.Service.DriveStorageService;
 import com.cartera_temp.cartera_temp.Service.FirmasService;
 import com.cartera_temp.cartera_temp.Service.UsuarioClientService;
 import com.cartera_temp.cartera_temp.Utils.Functions;
 
-import com.cartera_temp.cartera_temp.Utils.SaveFiles;
-
 import com.cartera_temp.cartera_temp.repository.CuentasPorCobrarRepository;
 import com.tenpisoft.n2w.MoneyConverters;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -48,13 +45,13 @@ public class GenerarPdfImpl implements GenerarPdf {
     private final CuentasPorCobrarRepository cpcR;
     private final UsuarioClientService usuClient;
     private final FirmasService firmasService;
-    private final SaveFiles saveFiles;
+    private final DriveStorageService driveStorageService;
 
-    public GenerarPdfImpl(CuentasPorCobrarRepository cpcR, UsuarioClientService usuClient, FirmasService firmasService, SaveFiles saveFiles) {
+    public GenerarPdfImpl(CuentasPorCobrarRepository cpcR, UsuarioClientService usuClient, FirmasService firmasService, DriveStorageService driveStorageService) {
         this.cpcR = cpcR;
         this.usuClient = usuClient;
         this.firmasService = firmasService;
-        this.saveFiles = saveFiles;
+        this.driveStorageService = driveStorageService;
     }
 
     public static boolean palabraResaltada(String palabra, String[] palabrasResaltadas) {
@@ -116,13 +113,11 @@ public class GenerarPdfImpl implements GenerarPdf {
                 InputStream inputStream = resource.getInputStream();
                 InputStream inputStreamFY = resourceFY.getInputStream();
 
-//                File file = new File(firma.getRuta());
-//                byte[] inputStreamFC =saveFiles.fileToByte(firma.getRuta());
-//                InputStream inputE = new FileInputStream(file);
-//                inputE.read(inputStreamFC);
                 PDImageXObject logoImage = PDImageXObject.createFromByteArray(doc, IOUtils.toByteArray(inputStream), "electrohogarOpa.png");
                 PDImageXObject firmaYeimar = PDImageXObject.createFromByteArray(doc, IOUtils.toByteArray(inputStreamFY), "FIRMA_YEIMAR.png");
-                PDImageXObject firmaAsesorCartera = PDImageXObject.createFromFile(firma.getRuta(), doc);
+                // firma.getRuta() es un fileId de Drive (o una ruta antigua /uploads/...); el tipo de imagen se detecta por el contenido
+                PDImageXObject firmaAsesorCartera = PDImageXObject.createFromByteArray(doc,
+                        driveStorageService.descargar(firma.getRuta()), firma.getFilename());
 
                 try (PDPageContentStream contens = new PDPageContentStream(doc, letras)) {
                     contens.drawImage(logoImage, 612 / 2 - 150, 680, 300, 100);

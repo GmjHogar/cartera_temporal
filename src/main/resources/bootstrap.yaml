@@ -1,6 +1,6 @@
 spring:
   application:
-    name: cartera-temporal-microservice
+    name: cartera-temporal-microservice-test
   profiles:
     active: 
       - production
