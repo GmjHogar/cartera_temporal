@@ -73,8 +73,8 @@ services:
       DRIVE_CLIENT_ID: ${DRIVE_CLIENT_ID:-}
       DRIVE_CLIENT_SECRET: ${DRIVE_CLIENT_SECRET:-}
       DRIVE_REFRESH_TOKEN: ${DRIVE_REFRESH_TOKEN:-}
-      # Carpeta de Drive separada para que las pruebas no escriban en los archivos de produccion
-      DRIVE_ROOT_FOLDER_ID: ${DRIVE_ROOT_FOLDER_ID_TEST:-}
+      # Usa la misma carpeta de produccion: lee los recibos existentes y guarda ahi los nuevos
+      DRIVE_ROOT_FOLDER_ID: ${DRIVE_ROOT_FOLDER_ID:-}
 
     user: "${PUID:-1001}:${PGID:-1001}"
 
